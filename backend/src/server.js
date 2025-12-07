@@ -13,6 +13,7 @@ console.log("Dynamo config:", {
   region: process.env.AWS_REGION,
 });
 
+//this is 
 
 const app = express();
 const PORT = process.env.PORT || 4000;
