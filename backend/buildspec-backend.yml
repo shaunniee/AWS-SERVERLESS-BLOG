@@ -2,29 +2,37 @@ version: 0.2
 
 env:
   variables:
-    LAMBDA_FUNCTION_NAME: "blog-api-lambda"  # update to your real name
+    AWS_REGION: "eu-west-1"
+    LAMBDA_FUNCTION_NAME: "blog-lambda-posts"  # <-- change to your real function name
 
 phases:
   install:
     runtime-versions:
       nodejs: 20
     commands:
-      - cd backend
+      - echo "Backend install phase (Lambda), CWD:$(pwd)"
       - npm ci
+
   pre_build:
     commands:
-      - cd backend
+      - echo "Running backend tests (if any)..."
       - npm test || echo "No tests configured, skipping"
+
   build:
     commands:
-      - cd backend
-      - zip -r ../function.zip src package.json package-lock.json node_modules
+      - echo "Packaging backend for Lambda..."
+      # we're already in backend/, so zip current dir
+      - zip -r backend-lambda.zip . -x "node_modules/aws-sdk/*"
+
   post_build:
     commands:
+      - echo "Updating Lambda function code:$LAMBDA_FUNCTION_NAME"
       - aws lambda update-function-code \
           --function-name "$LAMBDA_FUNCTION_NAME" \
-          --zip-file fileb://function.zip
+          --zip-file fileb://backend-lambda.zip \
+          --region "$AWS_REGION"
+      - echo "Lambda code update complete."
 
 artifacts:
   files:
-    - function.zip
+    - backend-lambda.zip
