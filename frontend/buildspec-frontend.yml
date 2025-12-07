@@ -15,7 +15,6 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Install phase, CWD: $(pwd)"
       - cd frontend
       - echo "Now in: $(pwd)"
       - npm ci
