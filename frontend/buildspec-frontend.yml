@@ -5,7 +5,7 @@ env:
     VITE_API_URL: "https://uoo16kesf6.execute-api.eu-west-1.amazonaws.com"
     VITE_COGNITO_REGION: "eu-west-1"
     VITE_COGNITO_USER_POOL_ID: "eu-west-1_tFLieqz5L"
-    VITE_COGNITO_CLIENT_ID: "72kko0qlvssmv196ddc4onpju"
+    VITE_COGNITO_CLIENT_ID: "72kko0qlvssmv196ddc4onpjnu"
     S3_FRONTEND_BUCKET: "shaun-blog-frontend"
     S3_FRONTEND_PREFIX: "web"
     CLOUDFRONT_DISTRIBUTION_ID: "EVI42HU41S2AP"
