@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     AWS_REGION: "eu-west-1"
-    LAMBDA_FUNCTION_NAME: "blog-lambda-posts"  # <-- change to your real function name
+    LAMBDA_FUNCTION_NAME: "blog-lambda-posts"  # <-- your real Lambda name
 
 phases:
   install:
@@ -11,18 +11,23 @@ phases:
       nodejs: 20
     commands:
       - echo "Backend install phase (Lambda), CWD:$(pwd)"
-      - npm ci
+      - cd backend
+      - if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - cd ..
 
   pre_build:
     commands:
       - echo "Running backend tests (if any)..."
+      - cd backend
       - npm test || echo "No tests configured, skipping"
+      - cd ..
 
   build:
     commands:
       - echo "Packaging backend for Lambda..."
-      # we're already in backend/, so zip current dir
-      - zip -r backend-lambda.zip . -x "node_modules/aws-sdk/*"
+      - cd backend
+      - zip -r ../backend-lambda.zip . -x "node_modules/aws-sdk/*"
+      - cd ..
 
   post_build:
     commands:
