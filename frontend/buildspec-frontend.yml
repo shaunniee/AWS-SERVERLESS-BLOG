@@ -15,14 +15,14 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Install phase, CWD: $(pwd)"
+      - echo "Install phase,CWD:$(pwd)"
       - cd frontend
-      - echo "Now in: $(pwd)"
+      - echo "Now in:$(pwd)"
       - npm ci
 
   pre_build:
     commands:
-      - echo "Pre-build phase, CWD: $(pwd)"
+      - echo "Pre-build phase, CWD:$(pwd)"
       - npm run build
 
   build:
