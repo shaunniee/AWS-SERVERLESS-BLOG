@@ -31,11 +31,9 @@ phases:
       - aws s3 sync dist/ "s3://$S3_FRONTEND_BUCKET/$S3_FRONTEND_PREFIX" --delete
 
   post_build:
-    commands:
-      - echo "Invalidating CloudFront cache..."
-      - aws cloudfront create-invalidation \
-          --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
-          --paths "/*"
+  commands:
+    - echo "Invalidating CloudFront cache..."
+    - aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
 
 artifacts:
   files:
