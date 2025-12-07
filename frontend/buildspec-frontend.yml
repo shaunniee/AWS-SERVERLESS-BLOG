@@ -15,19 +15,19 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Starting in: $(pwd)"
+      - echo "Starting install in: $(pwd)"
       - cd frontend
       - echo "Now in: $(pwd)"
       - npm ci
 
   pre_build:
     commands:
-      - echo "pre_build CWD: $(pwd)"   # should already be /.../src/frontend
+      - echo "pre_build CWD: $(pwd)"
       - npm run build
 
   build:
     commands:
-      - echo "build CWD: $(pwd)"       # still /.../src/frontend
+      - echo "Syncing dist/ to S3..."
       - aws s3 sync dist/ "s3://$S3_FRONTEND_BUCKET/$S3_FRONTEND_PREFIX" --delete
 
   post_build:
