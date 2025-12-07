@@ -1,38 +1,42 @@
 version: 0.2
+
 env:
   variables:
-    VITE_API_URL: 'https://uoo16kesf6.execute-api.eu-west-1.amazonaws.com'
-    VITE_COGNITO_REGION: eu-west-1
-    VITE_COGNITO_USER_POOL_ID: eu-west-1_tFLieqz5L
-    VITE_COGNITO_CLIENT_ID: 72kko0qlvssmv196ddc4onpju
-    S3_FRONTEND_BUCKET: shaun-blog-frontend
-    S3_FRONTEND_PREFIX: web
-    CLOUDFRONT_DISTRIBUTION_ID: EVI42HU41S2AP
+    VITE_API_URL: "https://uoo16kesf6.execute-api.eu-west-1.amazonaws.com"
+    VITE_COGNITO_REGION: "eu-west-1"
+    VITE_COGNITO_USER_POOL_ID: "eu-west-1_tFLieqz5L"
+    VITE_COGNITO_CLIENT_ID: "72kko0qlvssmv196ddc4onpju"
+    S3_FRONTEND_BUCKET: "shaun-blog-frontend"
+    S3_FRONTEND_PREFIX: "web"
+    CLOUDFRONT_DISTRIBUTION_ID: "EVI42HU41S2AP"
+
 phases:
   install:
     runtime-versions:
       nodejs: 20
     commands:
-      - 'echo "Install phase, CWD': $(pwd)"
+      - echo "Install phase, CWD: $(pwd)"
       - cd frontend
       - echo "Now in: $(pwd)"
       - npm ci
+
   pre_build:
     commands:
-      - 'echo "Pre-build phase, CWD': $(pwd)"
+      - echo "Pre-build phase, CWD: $(pwd)"
       - npm run build
+
   build:
     commands:
-      - 'echo "Build phase, syncing dist/ to S3..."'
-      - >-
-        aws s3 sync dist/ "s3://$S3_FRONTEND_BUCKET/$S3_FRONTEND_PREFIX"
-        --delete
+      - echo "Build phase, syncing dist/ to S3..."
+      - aws s3 sync dist/ "s3://$S3_FRONTEND_BUCKET/$S3_FRONTEND_PREFIX" --delete
+
   post_build:
     commands:
       - echo "Invalidating CloudFront cache..."
-      - >-
-        aws cloudfront create-invalidation \ --distribution-id
-        "$CLOUDFRONT_DISTRIBUTION_ID" \ --paths "/*"
+      - aws cloudfront create-invalidation \
+          --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+          --paths "/*"
+
 artifacts:
   files:
     - '**/*'
