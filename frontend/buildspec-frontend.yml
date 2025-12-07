@@ -8,25 +8,31 @@ env:
     VITE_COGNITO_CLIENT_ID: "72kko0qlvssmv196ddc4onpju"
     S3_FRONTEND_BUCKET: "shaun-blog-frontend"
     S3_FRONTEND_PREFIX: "web"
-    CLOUDFRONT_DISTRIBUTION_ID: "YOUR_DIST_ID_HERE"
+    CLOUDFRONT_DISTRIBUTION_ID: "EVI42HU41S2AP"
 
 phases:
   install:
     runtime-versions:
       nodejs: 20
     commands:
+      - echo "Starting in: $(pwd)"
       - cd frontend
+      - echo "Now in: $(pwd)"
       - npm ci
+
   pre_build:
     commands:
-      - cd frontend
+      - echo "pre_build CWD: $(pwd)"   # should already be /.../src/frontend
       - npm run build
+
   build:
     commands:
-      - cd frontend
+      - echo "build CWD: $(pwd)"       # still /.../src/frontend
       - aws s3 sync dist/ "s3://$S3_FRONTEND_BUCKET/$S3_FRONTEND_PREFIX" --delete
+
   post_build:
     commands:
+      - echo "Invalidating CloudFront cache..."
       - aws cloudfront create-invalidation \
           --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
           --paths "/*"
