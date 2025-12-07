@@ -2,37 +2,36 @@ version: 0.2
 
 env:
   variables:
-    # You can override these in the CodeBuild console if you want
     VITE_API_URL: "https://uoo16kesf6.execute-api.eu-west-1.amazonaws.com"
     VITE_COGNITO_REGION: "eu-west-1"
     VITE_COGNITO_USER_POOL_ID: "eu-west-1_tFLieqz5L"
     VITE_COGNITO_CLIENT_ID: "72kko0qlvssmv196ddc4onpju"
     S3_FRONTEND_BUCKET: "shaun-blog-frontend"
     S3_FRONTEND_PREFIX: "web"
-    CLOUDFRONT_DISTRIBUTION_ID: "EVI42HU41S2AP"
+    CLOUDFRONT_DISTRIBUTION_ID: "YOUR_DIST_ID_HERE"
 
 phases:
   install:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "Installing dependencies..."
+      - cd frontend
       - npm ci
   pre_build:
     commands:
-      - echo "Building frontend with Vite..."
+      - cd frontend
       - npm run build
   build:
     commands:
-      - echo "Syncing build to S3..."
+      - cd frontend
       - aws s3 sync dist/ "s3://$S3_FRONTEND_BUCKET/$S3_FRONTEND_PREFIX" --delete
   post_build:
     commands:
-      - echo "Invalidating CloudFront cache..."
       - aws cloudfront create-invalidation \
           --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
           --paths "/*"
+
 artifacts:
   files:
     - '**/*'
-  base-directory: dist
+  base-directory: frontend/dist

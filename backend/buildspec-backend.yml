@@ -1,0 +1,30 @@
+version: 0.2
+
+env:
+  variables:
+    LAMBDA_FUNCTION_NAME: "blog-api-lambda"  # update to your real name
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - cd backend
+      - npm ci
+  pre_build:
+    commands:
+      - cd backend
+      - npm test || echo "No tests configured, skipping"
+  build:
+    commands:
+      - cd backend
+      - zip -r ../function.zip src package.json package-lock.json node_modules
+  post_build:
+    commands:
+      - aws lambda update-function-code \
+          --function-name "$LAMBDA_FUNCTION_NAME" \
+          --zip-file fileb://function.zip
+
+artifacts:
+  files:
+    - function.zip
