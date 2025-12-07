@@ -31,12 +31,10 @@ phases:
 
   post_build:
     commands:
-      - echo "Updating Lambda function code:$LAMBDA_FUNCTION_NAME"
-      - aws lambda update-function-code \
-          --function-name "$LAMBDA_FUNCTION_NAME" \
-          --zip-file fileb://backend-lambda.zip \
-          --region "$AWS_REGION"
+      - echo "Updating Lambda function. Name:'$LAMBDA_FUNCTION_NAME' Region:'$AWS_REGION'"
+      - aws lambda update-function-code --function-name "$LAMBDA_FUNCTION_NAME" --zip-file fileb://backend-lambda.zip --region "$AWS_REGION"
       - echo "Lambda code update complete."
+
 
 artifacts:
   files:
