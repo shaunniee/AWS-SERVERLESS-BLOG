@@ -4,7 +4,7 @@ env:
   parameter-store:
     VITE_API_URL: "/blog/frontend/api-base-url"
     VITE_COGNITO_REGION: "/blog/frontend/cognito-region"
-    VITE_COGNITO_USER_POOL_ID: "e/blog/frontend/cognito-user-pool-id"
+    VITE_COGNITO_USER_POOL_ID: "/blog/frontend/cognito-user-pool-id"
     VITE_COGNITO_CLIENT_ID: "/blog/frontend/cognito-client-id"
     S3_FRONTEND_BUCKET: "/blog/frontend/s3-frontend-bucket"
     S3_FRONTEND_PREFIX: "/blog/frontend/s3-frontend-prefix"
