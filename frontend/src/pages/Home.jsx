@@ -10,20 +10,20 @@ export default function Home() {
         <div className="space-y-5">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            End-to-end AWS blog & CRM platform
+            Personal AWS blog & CRM
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
-            A portfolio-ready{" "}
-            <span className="text-emerald-600">serverless blog</span>{" "}
-            with a real CRM backend.
+            A{" "}
+            <span className="text-emerald-600">serverless cloud journal</span>{" "}
+            for projects, notes and experiments.
           </h1>
 
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-            This isn’t just a static blog. It’s a full application:
-            React front end, API Gateway + Lambda backend, DynamoDB
-            storage, Cognito authentication, and an internal CRM where
-            you can manage posts and inbound leads.
+            This site is where I write about what I&apos;m building on AWS:
+            architectures, experiments, small tools and lessons learned.
+            Behind the scenes it runs on a serverless stack with a simple CRM
+            for managing posts and contact messages.
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -31,42 +31,42 @@ export default function Home() {
               to="/blog"
               className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-slate-50 shadow-sm hover:bg-slate-800"
             >
-              View public blog
+              Read the blog
             </Link>
             <Link
-              to="/login"
+              to="/contact"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
             >
-              Admin login
+              Get in touch
             </Link>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3 text-xs text-slate-600">
             <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
               <div className="text-[10px] font-semibold uppercase text-slate-500 mb-1">
-                Frontend
+                Blog
               </div>
               <p>
-                React SPA with routing, protected admin area, and a
-                layout designed for real project write-ups.
+                Articles on AWS, cloud patterns, small experiments, and
+                how different pieces fit together.
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
               <div className="text-[10px] font-semibold uppercase text-slate-500 mb-1">
-                Backend
+                Projects
               </div>
               <p>
-                API Gateway + Lambda functions for posts and leads, using
-                DynamoDB as the primary data store.
+                Real implementations: serverless APIs, data models,
+                authentication flows and integrations.
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
               <div className="text-[10px] font-semibold uppercase text-slate-500 mb-1">
-                Security
+                Contact
               </div>
               <p>
-                Cognito user pool for admin auth, JWT-protected admin
-                APIs, and clean separation of public vs private routes.
+                A simple CRM behind the contact form to track messages,
+                ideas and follow-ups.
               </p>
             </div>
           </div>
@@ -79,10 +79,10 @@ export default function Home() {
             <div className="flex items-center justify-between gap-2">
               <div>
                 <div className="text-xs font-semibold text-slate-900">
-                  Architecture at a glance
+                  Under the hood
                 </div>
                 <div className="text-[11px] text-slate-500">
-                  High-level flow of this project
+                  How this site is wired together
                 </div>
               </div>
               <span className="text-[10px] rounded-full bg-slate-900 text-slate-50 px-2 py-1">
@@ -97,8 +97,8 @@ export default function Home() {
                   <span className="font-semibold text-slate-900">
                     Frontend:
                   </span>{" "}
-                  React SPA served from S3 + CloudFront (deploy-ready),
-                  with routes for blog, contact, and admin.
+                  React single-page app, with routes for the blog, individual
+                  posts, contact form and admin area.
                 </p>
               </div>
               <div className="flex items-start gap-2">
@@ -107,8 +107,8 @@ export default function Home() {
                   <span className="font-semibold text-slate-900">
                     API layer:
                   </span>{" "}
-                  REST endpoints in API Gateway invoking Lambda
-                  functions for posts and leads.
+                  REST endpoints in API Gateway invoking Lambda functions
+                  for blog posts and contact leads.
                 </p>
               </div>
               <div className="flex items-start gap-2">
@@ -117,8 +117,8 @@ export default function Home() {
                   <span className="font-semibold text-slate-900">
                     Data:
                   </span>{" "}
-                  Single DynamoDB table modelling blog posts, contact
-                  leads and admin views using PK/SK patterns.
+                  DynamoDB as the primary store, modelling posts and
+                  leads with a single-table PK/SK design.
                 </p>
               </div>
               <div className="flex items-start gap-2">
@@ -127,64 +127,60 @@ export default function Home() {
                   <span className="font-semibold text-slate-900">
                     Auth:
                   </span>{" "}
-                  Cognito user pool, hosted UI / SDK in React, JWT
-                  passed to API Gateway for admin-only routes.
+                  Cognito user pool for admin access, passing JWTs to
+                  API Gateway for protected routes.
                 </p>
               </div>
             </div>
 
             <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
               <span className="font-semibold text-slate-900">
-                What this demonstrates:
+                Why it&apos;s interesting:
               </span>{" "}
-              front-to-back design, IAM-safe serverless patterns, and
-              a realistic “mini-SaaS” style admin experience.
+              it&apos;s a small but complete application: UI, APIs, data,
+              auth and a simple admin workflow all working together.
             </div>
           </div>
         </div>
       </section>
 
-      {/* Why this project matters */}
+      {/* What you'll find here */}
       <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-sm font-semibold text-slate-900">
-              Why this project is useful to showcase
+              What you&apos;ll find on this site
             </h2>
             <p className="text-xs text-slate-600 max-w-xl">
-              This app is built to be something you can talk about in
-              an interview: not just “I used Lambda”, but how all the
-              moving pieces fit together.
+              Posts here focus on how things are actually built: the AWS
+              services involved, trade-offs, and the steps to get something
+              running end to end.
             </p>
           </div>
           <div className="grid gap-2 text-xs text-slate-600 sm:max-w-md">
             <div className="flex gap-2">
               <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-900" />
               <p>
-                Shows you can design and implement a{" "}
-                <span className="font-medium">
-                  full serverless architecture
-                </span>{" "}
-                rather than isolated services.
+                Walkthroughs of{" "}
+                <span className="font-medium">serverless patterns</span>, VPC
+                setups, data modelling and real deployments.
               </p>
             </div>
             <div className="flex gap-2">
               <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-900" />
               <p>
-                Demonstrates handling{" "}
+                Notes on{" "}
                 <span className="font-medium">
-                  authentication, authorization and JWTs
+                  authentication, authorization and IAM
                 </span>{" "}
-                correctly with Cognito + API Gateway.
+                using Cognito, API Gateway and Lambda.
               </p>
             </div>
             <div className="flex gap-2">
               <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-900" />
               <p>
-                Includes a real{" "}
-                <span className="font-medium">admin dashboard</span>{" "}
-                and simple CRM flow — something hiring managers
-                immediately understand.
+                Small experiments and ideas that tie together different
+                AWS services and tooling.
               </p>
             </div>
           </div>
@@ -221,7 +217,7 @@ export default function Home() {
             Amazon Cognito
           </span>
           <span className="rounded-full bg-slate-100 text-slate-800 px-3 py-1">
-            CI/CD-ready (CodeBuild / GitHub Actions)
+            CI/CD (CodeBuild / GitHub)
           </span>
         </div>
       </section>

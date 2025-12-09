@@ -39,6 +39,27 @@ export const handler = async (event) => {
     path,
     pathParameters: event.pathParameters
   });
+// pseudo-code inside your router
+if (method === "POST" && path === "/admin/media") {
+  const body = JSON.parse(event.body || "{}");
+  const { base64Data, contentType, filename } = body;
+
+  if (!base64Data) {
+    return jsonResponse(400, { error: "BASE64_REQUIRED" });
+  }
+
+  const result = await uploadMediaFromBase64({
+    base64Data,
+    contentType,
+    originalName: filename || "image",
+  });
+
+  return jsonResponse(201, {
+    ok: true,
+    url: result.url,
+    key: result.key,
+  });
+}
 
   // Handle CORS preflight generically
   if (method === "OPTIONS") {

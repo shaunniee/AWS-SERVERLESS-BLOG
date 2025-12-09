@@ -35,15 +35,16 @@ export default function Contact() {
       <div className="space-y-3">
         <span className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-900 text-[11px] font-medium text-slate-200 px-3 py-1">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          Contact · feeds the AWS CRM
+          Contact · messages go into the AWS backend
         </span>
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">
           Contact
         </h1>
         <p className="text-sm sm:text-base text-slate-600 max-w-2xl">
-          Drop a message here. In the AWS deployment, this form becomes a lead
-          capture entrypoint, writing to DynamoDB and triggering notifications
-          so you can demo a real-world serverless workflow.
+          If you want to say hi, ask about something you saw on the blog, or
+          share an idea, you can use this form. Behind the scenes it&apos;s
+          wired into the same serverless backend that powers the rest of the
+          site.
         </p>
       </div>
 
@@ -91,7 +92,7 @@ export default function Contact() {
                 value={form.message}
                 onChange={update("message")}
                 rows={4}
-                placeholder="Tell me what you’d like to build, migrate or fix on AWS."
+                placeholder="What would you like to chat about?"
                 required
               />
             </div>
@@ -106,9 +107,8 @@ export default function Contact() {
 
             {status === "sent" && (
               <p className="mt-2 text-xs text-emerald-700 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
-                Thanks — your message has been captured. In the full AWS setup,
-                this shows up as a lead in the admin CRM and can trigger
-                notifications.
+                Thanks for reaching out — your message has been stored and will
+                show up in the internal admin area.
               </p>
             )}
 
@@ -123,43 +123,36 @@ export default function Contact() {
         {/* “What happens in AWS” card */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm space-y-3 text-xs sm:text-sm text-slate-600">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
-            How this form fits into the architecture
+            Where this data goes
           </div>
           <p>
-            In local/dev mode this calls your mock API. In AWS, the exact same
-            UI becomes a lead capture entrypoint wired into your serverless
-            stack:
+            Locally this uses a mock API. In the AWS deployment, the same form
+            is connected to a small serverless pipeline:
           </p>
           <ul className="list-disc list-inside space-y-1">
             <li>
               <span className="font-medium text-slate-800">Frontend</span> –
-              React sends the payload to your API Gateway endpoint.
+              the form sends a JSON payload to an API Gateway endpoint.
             </li>
             <li>
               <span className="font-medium text-slate-800">Lambda</span> –
-              validates input, enriches metadata (IP, user agent, environment),
-              and writes a record to the{" "}
-              <span className="font-mono text-[11px]">
-                Leads
-              </span>{" "}
-              DynamoDB table.
+              validates input and writes a record into a DynamoDB table that
+              stores contact messages.
             </li>
             <li>
               <span className="font-medium text-slate-800">Notifications</span>{" "}
-              – optional SNS topic or email integration to alert you when a new
-              lead lands.
+              – can optionally publish to SNS or email so you know when a new
+              message arrives.
             </li>
             <li>
-              <span className="font-medium text-slate-800">
-                Admin CRM
-              </span>{" "}
-              – the record is surfaced in the authenticated admin area so you
-              can show end-to-end lead lifecycle.
+              <span className="font-medium text-slate-800">Admin view</span> –
+              messages are visible in the authenticated admin dashboard for
+              following up later.
             </li>
           </ul>
           <p className="text-[11px] text-slate-500 pt-1">
-            Good talking point: how you’d add retries, dead-letter queues, and
-            basic rate limiting if this received real production traffic.
+            It&apos;s the same pattern used elsewhere on the site: React on the
+            front, API Gateway and Lambda in the middle, DynamoDB at the back.
           </p>
         </div>
       </div>

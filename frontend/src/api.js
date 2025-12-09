@@ -21,6 +21,12 @@ export async function fetchPost(slug) {
   return res.json();
 }
 
+export async function fetchAdminPost(slug) {
+  const res = await fetch(`${API_BASE}/admin/posts/${slug}`);
+  if (!res.ok) throw new Error("Failed to fetch post");
+  return res.json();
+}
+
 export async function sendContact(form) {
   const res = await fetch(`${API_BASE}/contact`, {
     method: "POST",
@@ -30,6 +36,41 @@ export async function sendContact(form) {
   if (!res.ok) throw new Error("Failed to send contact");
   return res.json();
 }
+export async function uploadMedia(file, token) {
+  const base64Data = await fileToBase64(file);
+
+  const res = await fetch(`${API_BASE}/admin/media`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({
+      base64Data,
+      contentType: file.type,
+      filename: file.name,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error("MEDIA_UPLOAD_FAILED");
+  }
+  return await res.json(); // { ok, url, key }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      const base64 = result.split(",")[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 
 // ---------- admin ----------
 
@@ -64,4 +105,18 @@ export async function fetchLeads() {
   });
   if (!res.ok) throw new Error("Failed to fetch leads");
   return res.json();
+}
+
+
+export async function updatePost(slug, payload, token) {
+  const res = await fetch(`${API_BASE}/admin/posts/${slug}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("FAILED_TO_UPDATE_POST");
+  return await res.json();
 }

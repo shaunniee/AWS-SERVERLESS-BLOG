@@ -789,3 +789,31 @@ body {
   padding: 0;
   border-radius: 0;
 }
+/* Block code inside blog posts (Markdown from admin) */
+.prose pre {
+  background-color: #0f172a; /* slate-900 */
+  color: #e5e7eb;           /* light text */
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Inline code */
+.prose code {
+  background-color: #e5e7eb; /* light background */
+  color: #111827;            /* dark text */
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+}
+
+/* IMPORTANT: don't restyle code *inside* pre – just inherit the pre color */
+.prose pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}

@@ -10,7 +10,7 @@ import LoginPage from "./pages/LoginPage.jsx";
 import AdminLayout from "./pages/AdminLayout.jsx";
 import AdminPosts from "./pages/AdminPosts.jsx";
 import AdminLeads from "./pages/AdminLeads.jsx";
-
+import AdminPostEditor from "./pages/AdminPostEditor.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 
 function AppHeader() {
@@ -146,6 +146,8 @@ export default function App() {
           <Route index element={<AdminPosts />} />
           <Route path="posts" element={<AdminPosts />} />
           <Route path="leads" element={<AdminLeads />} />
+          <Route path="posts/new" element={<AdminPostEditor />} />
+          <Route path="posts/:slug/edit" element={<AdminPostEditor />} />
         </Route>
       </Routes>
     );
@@ -162,20 +164,21 @@ export default function App() {
 
   // Public site shell
   return (
-     <div className="min-h-screen flex flex-col bg-slate-50">
-    <AppHeader />
-    <main className="flex-1 bg-slate-50">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/blog" element={<BlogList />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/login" element={<LoginPage />} />
-        </Routes>
-      </div>
-    </main>
-    <AppFooter />
-  </div>
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <AppHeader />
+      <main className="flex-1">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/blog" element={<BlogList />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/contact" element={<Contact />} />
+            {/* keep /login here as a fallback in case someone links it directly with shell in place */}
+            <Route path="/login" element={<LoginPage />} />
+          </Routes>
+        </div>
+      </main>
+      <AppFooter />
+    </div>
   );
 }

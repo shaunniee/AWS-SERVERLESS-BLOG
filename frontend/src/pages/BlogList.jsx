@@ -31,9 +31,8 @@ export default function BlogList() {
           Blog
         </h1>
         <p className="text-sm sm:text-base text-slate-600 max-w-2xl">
-          Write-ups of AWS projects, serverless patterns, and the “why” behind
-          each architecture so you can talk through them confidently in
-          interviews.
+          Articles about AWS, serverless patterns, and how different
+          architectures are put together in real projects.
         </p>
       </div>
 
@@ -76,7 +75,7 @@ export default function BlogList() {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
               No posts yet. Once you create a post from the{" "}
               <span className="font-medium text-slate-900">Admin &gt; Posts</span>{" "}
-              section, it will appear here as a public case study.
+              section, it will appear here as a public article.
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">

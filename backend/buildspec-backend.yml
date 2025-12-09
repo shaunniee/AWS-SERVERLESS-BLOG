@@ -1,9 +1,16 @@
 version: 0.2
 
 env:
-  variables:
-    AWS_REGION: "eu-west-1"
-    LAMBDA_FUNCTION_NAME: "blog-lambda-posts"  # <-- your real Lambda name
+  parameter-store:
+    AWS_REGION: "/backend/blog/aws-region"
+    LAMBDA_FUNCTION_NAME: "/backend/blog/lambda-function-name"
+    BLOG_TABLE_NAME: "/backend/blog/blog-table-name"
+    LEADS_TOPIC_ARN: "/backend/blog/leads-topic-arn"
+    MEDIA_BUCKET: "blog-crm-media"
+    MEDIA_BASE_URL: "/backend/blog/media-bucket-base-url"
+    MEDIA_PREFIX: "/backend/blog/media-prefix"
+    FRONTEND_ORIGIN: "/blog/frontend/api-base-url"
+
 
 phases:
   install:
