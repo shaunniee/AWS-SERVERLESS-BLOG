@@ -6,7 +6,7 @@ env:
     LAMBDA_FUNCTION_NAME: "/backend/blog/lambda-function-name"
     BLOG_TABLE_NAME: "/backend/blog/blog-table-name"
     LEADS_TOPIC_ARN: "/backend/blog/leads-topic-arn"
-    MEDIA_BUCKET: "/backend/blog/blog-crm-media"
+    MEDIA_BUCKET: "/backend/blog/media-bucket"
     MEDIA_BASE_URL: "/backend/blog/media-bucket-base-url"
     MEDIA_PREFIX: "/backend/blog/media-prefix"
     FRONTEND_ORIGIN: "/blog/frontend/api-base-url"
