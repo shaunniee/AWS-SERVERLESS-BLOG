@@ -1,351 +1,292 @@
-
 # AWS Serverless Blog & CRM
 
 **LINK: https://d1cuwyawn63jd9.cloudfront.net**
 
-A **serverless blog + lightweight CRM** built to showcase real-world AWS architecture:
-
-- Public **blog** with markdown posts and rich media (images in S3)
-- **Admin dashboard (CRM)** for managing posts + viewing inbound leads
-- **React + Vite + Tailwind** frontend hosted on **S3 + CloudFront**
-- **API Gateway HTTP API + Lambda (Node.js)** backend
-- **DynamoDB single-table** design for posts and leads
-- **Cognito User Pool** for admin login
-- **SSM Parameter Store** + environment variables (no hardcoded config)
-- **CodePipeline + CodeBuild** for frontend and backend CI/CD
+Production-style serverless blog platform with a lightweight CRM for inbound leads – designed as a recruiter-facing portfolio project and a real tool you can actually use.
 
 ---
 
-## 1. High-level architecture
+## 1. What this project is
 
-**Region:** `eu-west-1`
+**Goal:** A real-world, serverless web application that shows you can design, build and operate a modern AWS workload end‑to‑end:
+
+- Public blog (Markdown + media uploads)
+- Admin dashboard (posts + leads)
+- Contact → lead capture
+- Authenticated admin flows (Cognito + JWT → API Gateway authorizer)
+- CI/CD for **frontend** (S3 + CloudFront) and **backend** (Lambda code updates)
+- No hard-coded secrets – configuration via **SSM Parameter Store** / environment variables
+
+Tech stack:
+
+- **Frontend:** React (Vite), React Router, Tailwind CSS
+- **Auth:** Amazon Cognito User Pool (email + password)
+- **API:** Amazon API Gateway (HTTP API)
+- **Compute:** AWS Lambda (single “blog-crm” function)
+- **Data:** DynamoDB (single-table design: posts + leads)
+- **Media:** S3 “media” bucket (blog images)
+- **Delivery:** S3 static hosting + CloudFront (SPA)
+- **Messaging:** SNS topic (optional) for new lead notifications
+- **Config:** SSM Parameter Store for non-secret config (URLs, ARNs, table names)
+
+---
+
+## 2. High-level architecture
 
 <img width="2589" height="2580" alt="Blank diagram" src="https://github.com/user-attachments/assets/4ab843e5-5d58-4a25-8ee5-f4949dfa92ec" />
 
----
+### 2.1 Diagram (mental model)
 
-## 2. Tech stack
+**User flow**
 
-**Frontend**
+1. Browser hits **CloudFront**.
+2. CloudFront serves the React SPA from an **S3 website bucket**.
+3. React SPA calls **API Gateway** for posts, contact and admin endpoints.
+4. API Gateway:
+   - Public routes → call Lambda directly.
+   - `/admin/*` routes → validate Cognito JWT via authorizer, then call Lambda.
+5. Lambda:
+   - Uses **DynamoDB** for posts and leads.
+   - Uses **S3 media bucket** for blog images.
+   - Optionally publishes an SNS message when a new lead is created.
 
-- React + Vite
-- React Router
-- Tailwind CSS
-- React Markdown + remark-gfm (GitHub-style markdown preview)
-- Cognito login (amazon-cognito-identity-js)
+**Admin flow**
 
-**Backend**
+1. Admin goes to `/login` on the SPA.
+2. SPA uses `amazon-cognito-identity-js` to authenticate against **Cognito**.
+3. Cognito returns **ID / access tokens**.
+4. Tokens are stored in localStorage and attached as `Authorization: Bearer <token>` to `/admin/*` API calls.
+5. API Gateway authorizer checks the token, passes the request to Lambda.
+6. Lambda performs DynamoDB operations (posts/leads) and returns JSON.
 
-- Node.js Lambda (single handler)
-- API Gateway HTTP API
-- DynamoDB (single table for posts + leads)
-- S3 media bucket for images (uploaded from editor)
-- SNS topic for “new lead” notifications (optional)
-
-**DevOps / Infra**
-
-- S3 static hosting + CloudFront
-- CodePipeline + CodeBuild (frontend + backend)
-- SSM Parameter Store for all config values used by buildspec / app
-
----
-
-## 3. Repository layout
-
-```bash
-AWS-SERVERLESS-BLOG/
-├─ frontend/
-│  ├─ src/
-│  │  ├─ pages/
-│  │  │  ├─ Home.jsx
-│  │  │  ├─ BlogList.jsx
-│  │  │  ├─ BlogPost.jsx
-│  │  │  ├─ Contact.jsx
-│  │  │  ├─ LoginPage.jsx
-│  │  │  ├─ AdminPosts.jsx
-│  │  │  ├─ AdminLeads.jsx
-│  │  │  └─ AdminPostEditor.jsx
-│  │  ├─ admin/AdminLayout.jsx
-│  │  ├─ auth/
-│  │  │  ├─ AuthContext.jsx
-│  │  │  ├─ ProtectedRoute.jsx
-│  │  │  └─ cognito.js
-│  │  ├─ api.js
-│  │  ├─ App.jsx
-│  │  └─ main.jsx
-│  ├─ tailwind.config.js
-│  ├─ postcss.config.js
-│  ├─ vite.config.js
-│  ├─ package.json
-│  └─ buildspec-frontend.yml
-│
-├─ backend/
-│  ├─ src/
-│  │  ├─ lambda-handler.js   # API Gateway entrypoint
-│  │  └─ storage.js          # DynamoDB + S3 abstractions
-│  ├─ package.json
-│  └─ buildspec-backend.yml
-│
-├─ diagrams/
-│  └─ architecture-high-level.drawio
-│
-└─ README.md
-```
 
 ---
 
-## 4. Configuration via SSM Parameter Store
+## 3. Data model (DynamoDB single-table)
 
-You’re using **SSM Parameter Store** as the central source of truth for config.
-
-### 4.1 Frontend parameters
-
-Example Parameter Store paths:
+Single table, for example:
 
 ```text
-/blog-app/frontend/api-base-url
-/blog-app/frontend/cognito-region
-/blog-app/frontend/user-pool-id
-/blog-app/frontend/user-pool-client-id
-/blog-app/frontend/frontend-origin
+Table name: BLOG_TABLE_NAME
+
+Partition key: pk (string)
+Sort key:     sk (string)
 ```
 
-In **CodeBuild** (`buildspec-frontend.yml`), you map them into Vite env vars:
+### 3.1 Post items
 
-```yaml
-env:
-  parameter-store:
-    VITE_API_BASE_URL: "/blog-app/frontend/api-base-url"
-    VITE_COGNITO_REGION: "/blog-app/frontend/cognito-region"
-    VITE_COGNITO_USER_POOL_ID: "/blog-app/frontend/user-pool-id"
-    VITE_COGNITO_CLIENT_ID: "/blog-app/frontend/user-pool-client-id"
-```
-
-Vite automatically exposes any `VITE_*` variable to the frontend.  
-The React app reads them via `import.meta.env.VITE_API_BASE_URL`, etc.
-
-### 4.2 Backend parameters
-
-Example backend Parameter Store keys:
-
-```text
-/blog-app/backend/blog-table-name
-/blog-app/backend/media-bucket
-/blog-app/backend/media-prefix
-/blog-app/backend/media-base-url
-/blog-app/backend/leads-topic-arn
-/blog-app/backend/frontend-origin
-```
-
-You have two options:
-
-1. **Simpler (current setup):**  
-   Use Parameter Store in CodeBuild to set **Lambda environment variables**:
-
-   ```yaml
-   env:
-     parameter-store:
-       BLOG_TABLE_NAME: "/blog-app/backend/blog-table-name"
-       MEDIA_BUCKET: "/blog-app/backend/media-bucket"
-       MEDIA_PREFIX: "/blog-app/backend/media-prefix"
-       MEDIA_BASE_URL: "/blog-app/backend/media-base-url"
-       LEADS_TOPIC_ARN: "/blog-app/backend/leads-topic-arn"
-       FRONTEND_ORIGIN: "/blog-app/backend/frontend-origin"
-   ```
-
-   Then in `lambda-handler.js` / `storage.js` you read:
-
-   ```js
-   const tableName = process.env.BLOG_TABLE_NAME;
-   const MEDIA_BUCKET = process.env.MEDIA_BUCKET;
-   const MEDIA_BASE_URL = process.env.MEDIA_BASE_URL;
-   const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
-   ```
-
-
-
----
-
-## 5. DynamoDB model
-
-Single table (e.g. `blog-app-table`):
-
-**Partition key:** `pk`  
-**Sort key:** `sk`
-
-### Blog posts
-
-- `pk = POST#<slug>`
-- `sk = METADATA`
+- `pk = "POST#<slug>"`
+- `sk = "METADATA"`
 - Attributes:
   - `type = "POST"`
-  - `slug`
+  - `slug` – URL slug (unique)
   - `title`
-  - `excerpt`
-  - `content` (markdown)
-  - `tags` (list of strings)
-  - `status` (`draft` or `published`)
-  - `createdAt`, `updatedAt`, `publishedAt` (ISO strings)
+  - `content` – Markdown
+  - `excerpt` – short preview (generated)
+  - `tags` – string[]
+  - `status` – `"draft"` or `"published"`
+  - `createdAt`, `updatedAt`, `publishedAt`
 
-### Leads
+### 3.2 Lead items
 
-- `pk = LEAD#<id>`
-- `sk = METADATA`
+- `pk = "LEAD#<id>"`
+- `sk = "METADATA"`
 - Attributes:
   - `type = "LEAD"`
-  - `id`
-  - `name`
-  - `email`
-  - `message`
-  - `source` (page or context)
-  - `status` (e.g. `"new"`)
+  - `id` – generated ID (timestamp + random bits)
+  - `name`, `email`, `message`, `source`
+  - `status` – `"new"`
   - `createdAt`
 
-The `storage.js` module hides all of this behind functions:
+### 3.3 Access patterns
 
-- `listPublishedPosts()`
-- `listAllPosts()`
-- `listLeads()`
-- `getPostBySlug(slug)`
-- `createPost({ title, slug, content, tags, status })`
-- `updatePostBySlug(slug, updates)`
-- `createLead({ name, email, message, source })`
-- `uploadMediaFromBase64({ base64Data, contentType, originalName })`
+- **Public blog list** – `Scan` on `begins_with(pk, "POST#")` and `status = "published"` → sorted by `publishedAt` descending.
+- **Public blog detail** – `Get` with `pk = POST#slug, sk = METADATA`.
+- **Admin posts list** – `Scan` on `begins_with(pk, "POST#")` (draft + published).
+- **Admin leads list** – `Scan` on `begins_with(pk, "LEAD#")` sorted by `createdAt`.
+
+For a real production project you’d move to GSI-based queries and avoid Scan, but for a portfolio + small personal blog this is fine and keeps code readable.
 
 ---
 
-## 6. Backend: Lambda handler
+## 4. S3 buckets and media strategy
 
-`backend/src/lambda-handler.js` is a **single Lambda** that handles all routes behind API Gateway.
+### 4.1 Static website bucket
 
-### Routing helper
+- Bucket: `aws-serverless-blog-frontend-<env>`
+- CloudFront origin: this bucket (origin access control / OAI as needed).
+- React app built with `npm run build` → `dist/` uploaded to this bucket by CodeBuild.
 
-- `normalizePath(event)` handles `rawPath` / `path` and strips the stage.
-- `getMethod(event)` normalizes HTTP method.
-- `jsonResponse(statusCode, body, origin)` wraps responses and sets all CORS headers.
-- `parseBody(event)` safely parses JSON, including base64-encoded bodies.
+### 4.2 Media bucket
 
-### Public endpoints
+- Bucket: `aws-serverless-blog-media-<env>`
+- Prefix: `media/`
+- No public ACLs (bucket has **ACLs disabled**).
+- Bucket policy allows **CloudFront origin access** or presigned URLs (in this project we link via `MEDIA_BASE_URL` which is the CloudFront domain pointing at this bucket or a public static website config).
 
-- `GET /health`  
-  Returns `{ status: "ok", service: "blog-crm-backend", region }`.
+Backend receives a base64 image from the admin editor, writes it to S3:
 
-- `GET /posts`  
-  Returns a list of published posts (title, slug, excerpt, tags, publishedAt).
+```js
+// storage.js
+export async function uploadMediaFromBase64({ base64Data, contentType, originalName }) {
+  const buffer = Buffer.from(base64Data, "base64");
+  const safeName = sanitizeFilename(originalName);
+  const key = `${MEDIA_PREFIX}${Date.now()}-${crypto.randomUUID()}-${safeName}`;
 
-- `GET /posts/{slug}`  
-  Returns full post content if `status === "published"`, else 404.
+  await s3.send(new PutObjectCommand({
+    Bucket: MEDIA_BUCKET,
+    Key: key,
+    Body: buffer,
+    ContentType: contentType || "application/octet-stream",
+  }));
 
-- `POST /contact`  
-  Validates name/email/message, creates a `LEAD` item in DynamoDB, and (if `LEADS_TOPIC_ARN` is set) sends a JSON payload to SNS. Returns `{ ok: true, leadId }`.
+  return {
+    key,
+    url: `${MEDIA_BASE_URL}/${key}`, // resolved via CloudFront or direct bucket URL
+  };
+}
+```
 
-### Admin endpoints (protected by Cognito JWT)
+The React admin editor inserts a standard Markdown image:
 
-Auth is enforced in **API Gateway** via a Cognito authorizer (User Pool). Lambda assumes `/admin/*` is only called with a valid JWT.
+```md
+![screenshot](/media/...generated-key...)
+```
 
-- `GET /admin/posts`  
-  List all posts (draft + published) for the admin dashboard.
-
-- `POST /admin/posts`  
-  Creates a new post. Slug uniqueness enforced with a conditional write.
-
-- `GET /admin/leads`  
-  Reads all `LEAD#` items, sorts by `createdAt` desc.
-
-- `POST /admin/media`  
-  Accepts `{ base64Data, contentType, filename }`, writes to `MEDIA_BUCKET` under `MEDIA_PREFIX`, and returns `{ ok, url, key }`.
-
-- `GET /admin/posts/{slug}`  
-  Returns full post (draft or published) for editing.
-
-- `PUT /admin/posts/{slug}`  
-  Merges updates into an existing post; if status becomes `published` and there was no `publishedAt`, sets `publishedAt = now`.
-
-Anything not matched returns a `404` with `{ error: "NOT_FOUND", method, path }`.
+so the same content works locally and in production.
 
 ---
 
-## 7. Frontend: routes, editor, media
+## 5. Backend: Lambda handler
 
-### Routing
+### 5.1 Responsibilities
 
-In `App.jsx` (simplified):
+- Handle **public** routes:
+  - `GET /health`
+  - `GET /posts`
+  - `GET /posts/{slug}`
+  - `POST /contact`
+- Handle **admin** routes (API Gateway authorizer already validated Cognito JWT):
+  - `GET /admin/posts`
+  - `POST /admin/posts`
+  - `GET /admin/posts/{slug}`
+  - `PUT /admin/posts/{slug}`
+  - `GET /admin/leads`
+  - `POST /admin/media`
+- Call SNS on new lead (optional)
+- Handle CORS for both `OPTIONS` and real requests.
 
-- `/` → `Home`
-- `/blog` → `BlogList`
-- `/blog/:slug` → `BlogPost`
-- `/contact` → `Contact`
-- `/login` → `LoginPage`
-- `/admin/*` → `ProtectedRoute` → `AdminLayout`
-  - `/admin` → `AdminPosts`
-  - `/admin/posts` → `AdminPosts`
-  - `/admin/posts/new` → `AdminPostEditor` (create mode)
-  - `/admin/posts/:slug/edit` → `AdminPostEditor` (edit mode)
-  - `/admin/leads` → `AdminLeads`
+### 5.2 CORS and routing
 
-### Auth
+Key helpers:
 
-`auth/cognito.js` wraps Cognito:
+```js
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_ORIGIN,
+].filter(Boolean);
 
-- `signIn(username, password)` handles:
-  - Normal auth
-  - Force-change-password flow (`NEW_PASSWORD_REQUIRED`)
-- Returns access/id tokens + expiry.
+function jsonResponse(statusCode, body, origin) {
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": origin || allowedOrigins[0] || "*",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Allow-Headers":
+        "Content-Type,Authorization,X-Requested-With,Origin,Accept",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+    },
+    body: JSON.stringify(body),
+  };
+}
 
-`AuthContext.jsx`:
+function normalizePath(event) {
+  let path = event.rawPath || event.path || "/";
+  const stage = event.requestContext?.stage;
 
-- Stores tokens in memory + localStorage
-- Checks expiry, auto logs out if expired
-- Provides `user`, `login`, `logout`, `isAuthenticated`
+  if (stage && path.startsWith(`/${stage}/`)) {
+    path = path.slice(stage.length + 1);
+  } else if (stage && path === `/${stage}`) {
+    path = "/";
+  }
+  return path;
+}
+```
 
-`ProtectedRoute.jsx`:
+Routing is done with simple `if` chains inside `handler(event)` based on `method` and `path`.
 
-- If not authenticated → redirect to `/login`
-- If authenticated → render children (e.g. `AdminLayout`)
 
-### Admin UI
+---
 
-`AdminLayout.jsx`:
+## 6. Frontend (React + Vite + Tailwind)
 
-- Sidebar nav: Posts / Leads
-- Top bar: current username + sign out
-- `<Outlet />` renders the active admin page
+### 6.1 Main structure
 
-`AdminPosts.jsx`:
+- `frontend/src/App.jsx` – shell layout + routing
+- `frontend/src/pages/*`:
+  - `Home.jsx` – explains the project, stack and links to blog + admin.
+  - `BlogList.jsx` – fetches `GET /posts`.
+  - `BlogPost.jsx` – fetches `GET /posts/:slug` and renders Markdown.
+  - `Contact.jsx` – posts to `/contact`.
+  - `LoginPage.jsx` – Cognito login, force-change-password flow, error handling.
+  - `AdminPosts.jsx` – admin list of posts, with status, timestamps and view/edit actions.
+  - `AdminLeads.jsx` – list of captured leads.
+  - `AdminPostEditor.jsx` – full-page Markdown editor with media upload & live preview.
+- `frontend/src/auth/*`:
+  - `cognito.js` – sign-in / sign-out / token helpers.
+  - `AuthContext.jsx` – stores user + tokens, provides `login` / `logout`.
+  - `ProtectedRoute.jsx` – wraps admin routes.
+- `frontend/src/api.js` – all API calls; builds URLs from `import.meta.env.VITE_API_BASE_URL` and attaches JWTs automatically.
 
-- Fetches `/admin/posts`
-- Shows table of posts:
-  - Title, status, tags, created/published dates
-- Actions:
-  - View:
-    - If post is `published` → `/blog/:slug`
-    - If `draft` → `/admin/posts/:slug/edit`
-  - Edit:
-    - `/admin/posts/:slug/edit`
-  - New post:
-    - `/admin/posts/new`
+### 6.2 Environment variables (no hard-coded values)
 
-`AdminPostEditor.jsx`:
+Vite reads variables prefixed with `VITE_`:
 
-- Detects **create vs edit** mode using route param
-- Handles:
-  - Title
-  - Slug (auto from title, can unlock to edit)
-  - Status (draft/published)
-  - Tags (comma-separated)
-  - Markdown content
-- Markdown editor:
-  - Left: textarea
-  - Right: live preview with `react-markdown` + `remark-gfm`
-- Media upload:
-  - File input (“Upload image”)
-  - Converts selected file to base64
-  - Calls `POST /admin/media`
-  - Inserts `![filename](https://media-url)` at cursor position
+```bash
+# .env.local (not committed)
+VITE_API_BASE_URL=https://your-api-id.execute-api.eu-west-1.amazonaws.com
+VITE_COGNITO_USER_POOL_ID=eu-west-1_XXXXXXX
+VITE_COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxx
+VITE_COGNITO_REGION=eu-west-1
+```
 
-`BlogPost.jsx`:
+`api.js` and `cognito.js` read these values at build time; nothing is hard-coded into source.
 
-- Uses `ReactMarkdown` to render the post content exactly as stored (including uploaded image URLs).
+### 6.3 Admin editor UX
+
+- Full-width layout inside protected admin route.
+- Left pane: Markdown text area + “Upload image” button.
+- Right pane: live preview using `react-markdown` + `remark-gfm` with Tailwind typography-style classes.
+- When you click **Upload image**:
+  - File is read as base64 in the browser.
+  - Frontend calls `POST /admin/media` with base64 payload.
+  - Lambda uploads to S3 and returns a URL.
+  - Editor inserts `![filename](url)` into the content.
+
+
+---
+
+## 7. Authentication (Cognito)
+
+- **User Pool**:
+  - One app client (no secret) used by the SPA.
+  - Hosted in `eu-west-1` (same as the rest of the stack).
+- **Admin users**:
+  - Created via console or CLI.
+  - Make sure the user is `CONFIRMED` (no lingering `FORCE_CHANGE_PASSWORD`).
+
+Flow in the SPA:
+
+1. User enters email + password.
+2. `amazon-cognito-identity-js` calls Cognito:
+   - Handles `NEW_PASSWORD_REQUIRED` challenge when user is in `FORCE_CHANGE_PASSWORD` state.
+3. On success, store `idToken` + `accessToken` in localStorage.
+4. `AuthContext` exposes `user`, `login`, `logout`, and a helper to retrieve the current access token.
+5. `ProtectedRoute` checks that a non-expired token exists before rendering admin routes.
+6. All `/admin/*` requests include `Authorization: Bearer <accessToken>`.
+
+API Gateway authorizer validates the token against the same user pool and client.
 
 ---
 
@@ -353,68 +294,171 @@ In `App.jsx` (simplified):
 
 ### 8.1 Frontend pipeline
 
-- **Source:** GitHub repo
-- **Stages:**
-  1. **Source** → pulls from main branch
-  2. **Build (CodeBuild)**:
-     - Reads SSM parameters into Vite env vars
-     - `npm ci`
-     - `npm run build`
-  3. **Deploy:**  
-     - `aws s3 sync frontend/dist s3://<frontend-bucket> --delete`
-     - `aws cloudfront create-invalidation --paths "/*"`
+- **Source:** GitHub repo (or CodeCommit) – `main` branch.
+- **CodeBuild project (frontend)**:
+  - Buildspec stored in repo under `frontend/buildspec-frontend.yml`.
+  - Runs `npm ci`, `npm run build`, uploads `dist/` to S3, triggers CloudFront invalidation.
+- **CodePipeline**:
+  - Stages:
+    1. Source – pull from Git.
+    2. Build – CodeBuild frontend project.
 
-`frontend/buildspec-frontend.yml` already uses **Parameter Store** for Vite config.
+Example `buildspec-frontend.yml` (simplified):
 
-### 8.2 Backend build
+```yaml
+version: 0.2
 
-- **Source:** Same repo
-- **Build (CodeBuild):**
-  - `cd backend && npm ci`
-  - `zip -r ../backend-lambda.zip .`
-  - `aws lambda update-function-code --function-name blog-lambda-posts --zip-file fileb://backend-lambda.zip`
-- **Env:** uses SSM Parameter Store for backend config variables if needed, and plain env vars for `LAMBDA_FUNCTION_NAME` / `AWS_REGION`.
+phases:
+  install:
+    commands:
+      - cd frontend
+      - npm ci
+  build:
+    commands:
+      - cd frontend
+      - npm run build
+  post_build:
+    commands:
+      - aws s3 sync frontend/dist "s3://$FRONTEND_BUCKET" --delete
+      - aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
+```
 
-You’re *not* using CloudFormation for backend deployment – CodeBuild directly updates the Lambda function code.
+Environment variables like `FRONTEND_BUCKET` and `CLOUDFRONT_DISTRIBUTION_ID` are set in the CodeBuild project configuration (not hard-coded in the spec).
+
+### 8.2 Backend pipeline
+
+- **Source:** Same repo (`backend/` directory).
+- **CodeBuild project (backend)**:
+  - `buildspec-backend.yml` stored in `backend/` folder.
+  - zips backend code and runs `aws lambda update-function-code`.
+- **CodePipeline**:
+  - Either a separate pipeline or an extra parallel build stage in the frontend pipeline.
+
+Example `buildspec-backend.yml` (simplified):
+
+```yaml
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - cd backend
+      - npm ci
+  build:
+    commands:
+      - cd backend
+      - zip -r backend-lambda.zip .
+  post_build:
+    commands:
+      - aws lambda update-function-code \
+          --function-name "$LAMBDA_FUNCTION_NAME" \
+          --zip-file fileb://backend/backend-lambda.zip \
+          --region "$AWS_REGION"
+```
+
+Here again, `LAMBDA_FUNCTION_NAME` and `AWS_REGION` are configured on the CodeBuild project (or CodePipeline environment), not committed to source.
+
 
 ---
 
-## 9. Security & best practices
+## 9. Configuration & security choices
 
-- **No hardcoded secrets**
-  - All configuration via:
-    - **SSM Parameter Store** → CodeBuild env → Vite / Lambda env vars
-  - No access keys or secret IDs in code
+Key security and robustness choices you can talk about in interviews:
 
-- **IAM least privilege**
-  - Lambda role:
-    - `dynamodb:GetItem`, `PutItem`, `Scan` on the **blog table** only
-    - `s3:PutObject` (and optionally `GetObject`) on the **media bucket** only
-    - `sns:Publish` only on the **leads topic** ARN
-  - CodeBuild roles:
-    - Frontend project: S3 + CloudFront + SSM GetParameter
-    - Backend project: `lambda:UpdateFunctionCode` on the specific Lambda + SSM GetParameter
+1. **No hard‑coded secrets**
+   - Cognito IDs, table names, bucket names, API URLs etc. pulled from:
+     - **Vite env** variables on the frontend (`.env.local`, not committed).
+     - **Lambda environment variables** (injected via console / IaC).
+     - **SSM Parameter Store** holds values for reuse (e.g. API URL, CloudFront domains); pipeline reads them and passes into env variables.
+2. **Least-privilege IAM**
+   - Lambda role:
+     - `dynamodb:GetItem/PutItem/Scan/Query` on the single table.
+     - `s3:PutObject` only on the media bucket with `media/*` prefix.
+     - `sns:Publish` only on the leads topic (if configured).
+   - CodeBuild roles:
+     - `s3:PutObject` on frontend bucket.
+     - `cloudfront:CreateInvalidation` for the distribution.
+     - `lambda:UpdateFunctionCode` for the backend function.
+3. **Cognito-protected admin routes**
+   - No open admin endpoints – everything under `/admin/*` requires a valid JWT.
+4. **CORS locked down**
+   - `Access-Control-Allow-Origin` limited to known origins (`localhost` + production CloudFront).
+5. **No S3 ACLs**
+   - Media bucket uses **ACLs disabled** + bucket policies / CloudFront to control access.
+6. **SPA routing fixes**
+   - CloudFront + S3 configured so that all unknown paths (e.g. `/blog/my-post`) return `index.html`, letting React Router handle routing.
 
-- **Auth**
-  - Cognito User Pool for admin users
-  - JWT authorizer in API Gateway for `/admin/*`
-  - Frontend checks token expiry and auto-signs out
+---
 
-- **CORS**
-  - Responses include:
-    - `Access-Control-Allow-Origin` set to:
-      - CloudFront domain in prod (`FRONTEND_ORIGIN`)
-      - `http://localhost:5173` in dev
-  - `OPTIONS` handled centrally in Lambda
+## 10. Issues & troubleshooting (short summary)
 
-- **Transport security**
-  - CloudFront + API Gateway endpoints are HTTPS
-  - No direct public access to DynamoDB or Lambda
+A few real issues you hit and how they were fixed:
 
-- **Error handling**
-  - Clear 4xx responses for validation errors
-  - 5xx responses log full error details to CloudWatch
-  - No sensitive data logged
+1. **Cognito “FORCE_CHANGE_PASSWORD” / NotAuthorized**
+   - Symptom: `NotAuthorizedException: Incorrect username or password` or `NEW_PASSWORD_REQUIRED` behaviour.
+   - Fix: In the Cognito console, either complete the new password challenge via the login flow in the app, or set/confirm the password manually so the user status becomes `CONFIRMED`.
+
+2. **401/403 on `/admin/*` despite login**
+   - Symptom: API returns 401, browser console shows missing or invalid token.
+   - Fix:
+     - Ensure frontend attaches `Authorization: Bearer <accessToken>`.
+     - Check API Gateway authorizer is configured with the correct **user pool** and **audience (client ID)**.
+     - Verify token hasn’t expired and is not a dummy.
+
+3. **CORS errors in browser**
+   - Symptom: `No 'Access-Control-Allow-Origin' header` or blocked by CORS.
+   - Fix:
+     - Add `OPTIONS` route in API Gateway and handle it in the Lambda handler.
+     - Ensure `Access-Control-Allow-Origin` is set to your CloudFront domain and `localhost:5173` during dev.
+
+4. **CloudFront “AccessDenied” or blank pages on deep links**
+   - Symptom: Refresh on `/blog/<slug>` returns `AccessDenied`.
+   - Fix: Configure CloudFront / S3 static website to return `index.html` as the 404 / error document so SPA routing works.
+
+5. **CodeBuild YAML / path issues**
+   - Symptom: `YAML_FILE_ERROR` or `cd frontend: No such file or directory`.
+   - Fix:
+     - Keep buildspec in the correct folder and adjust `cd` paths accordingly.
+     - Use `buildspec-frontend.yml` under `frontend/` and reference that in the CodeBuild project.
+
+6. **S3 ACL / media upload errors**
+   - Symptom: `AccessControlListNotSupported: The bucket does not allow ACLs`.
+   - Fix: Stop sending ACLs from the SDK (`PutObject` without ACL), or disable ACLs on the bucket and rely on bucket policy.
+
+7. **DynamoDB ValidationException (`Type mismatch for key pk`)**
+   - Symptom: Insert/update failing after refactors.
+   - Fix: Ensure you pass a plain JS object (no nested `marshall` calls) shaped like:
+     - `pk: "POST#slug", sk: "METADATA"` etc.
+     - Removed extra `marshall()` calls and used `PutCommand` with an object.
+
+You can keep this section short in the README but talk through the debugging in interviews.
+
+---
+
+## 11. How to run locally
+
+### 11.1 Backend
+
+```bash
+cd backend
+cp .env.example .env.local   # fill BLOG_TABLE_NAME, MEDIA_BUCKET, etc.
+npm install
+npm run dev                  # or node src/server.js for pure Express mode
+```
+
+- Use `aws-vault` or a profile with permissions to DynamoDB + S3 + SNS (for local dev).
+- You can point `API_BASE_URL` in the frontend to `http://localhost:4000` during development.
+
+### 11.2 Frontend
+
+```bash
+cd frontend
+cp .env.example .env.local   # VITE_API_BASE_URL, Cognito IDs etc.
+npm install
+npm run dev                  # http://localhost:5173
+```
+
+Create a test Cognito user, confirm the password and then log in via `/login` to access `/admin`.
 
 ---
 
