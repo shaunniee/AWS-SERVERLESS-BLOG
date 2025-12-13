@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   parameter-store:
-    VITE_API_URL: "/blog/frontend/api-base-url"
+    VITE_API_BASE_URL: "/blog/frontend/api-base-url"
     VITE_COGNITO_REGION: "/blog/frontend/cognito-region"
     VITE_COGNITO_USER_POOL_ID: "/blog/frontend/cognito-user-pool-id"
     VITE_COGNITO_CLIENT_ID: "/blog/frontend/cognito-client-id"
